@@ -53,7 +53,7 @@ export default function SiteSettings() {
             <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: i < SETTINGS.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
               <div>
                 <strong style={{ fontSize: 14 }}>{s.label}</strong>
-                <p style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{s.description}</p>
+                <p style={{ fontSize: 12, color: '#6f675f', marginTop: 2 }}>{s.description}</p>
               </div>
               {s.type === 'toggle' ? (
                 <label className="toggle">

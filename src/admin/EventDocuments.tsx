@@ -67,7 +67,7 @@ export default function EventDocuments() {
                   <tr key={doc.id}>
                     <td><strong>{doc.title}</strong></td>
                     <td><span className="badge badge-blue">{doc.document_type}</span></td>
-                    <td><a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#3b82f6' }}>View PDF</a></td>
+                    <td><a href={doc.file_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#f26a00' }}>View PDF</a></td>
                     <td><label className="toggle"><input type="checkbox" checked={doc.is_published} onChange={async () => { await supabase!.from('event_documents').update({ is_published: !doc.is_published }).eq('id', doc.id); load(); }} /><span className="toggle-slider" /></label></td>
                     <td>{doc.display_order}</td>
                     <td><div style={{ display: 'flex', gap: 6 }}>

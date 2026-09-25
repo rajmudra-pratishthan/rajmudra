@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { BarChart2, Bell, BookOpen, CalendarDays, FileText, Image, Instagram, LayoutDashboard, LogOut, Mail, MessageSquare, Settings, Shield, Star, Users, Menu, X, Heart, DollarSign, Building2 } from 'lucide-react';
+import { ChartBar as BarChart2, Bell, BookOpen, CalendarDays, FileText, Image, Instagram, LayoutDashboard, LogOut, Mail, MessageSquare, Settings, Shield, Star, Users, Menu, X, Heart, DollarSign, Building2 } from 'lucide-react';
 import { useAuth } from './utils';
 
 const NAV = [
@@ -37,8 +37,11 @@ export default function AdminLayout({ children, title }: { children: ReactNode; 
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
       <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="admin-sidebar-brand">
-          <strong>Rajmudra Pratishthan</strong>
-          <small>Admin Panel</small>
+          <img src="/logo.png" alt="Logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          <div>
+            <strong>Rajmudra Pratishthan</strong>
+            <small>Admin Panel</small>
+          </div>
         </div>
         <nav className="admin-nav">
           {NAV.map(({ section, items }) => (
@@ -67,8 +70,8 @@ export default function AdminLayout({ children, title }: { children: ReactNode; 
             <h2>{title}</h2>
           </div>
           <div className="admin-topbar-right">
-            <Shield size={16} style={{ color: '#3b82f6' }} />
-            <span style={{ fontSize: 12, color: '#64748b' }}>Admin</span>
+            <Shield size={16} style={{ color: '#f26a00' }} />
+            <span style={{ fontSize: 12, color: '#6f675f' }}>Admin</span>
           </div>
         </header>
         <main className="admin-content">{children}</main>

@@ -27,7 +27,7 @@ function AdminRouter() {
     return () => window.removeEventListener('popstate', handler);
   }, []);
 
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', color: '#64748b' }}>Loading…</div>;
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', color: '#6f675f' }}>Loading…</div>;
   if (!session) return <AdminLogin />;
 
   if (path === '/admin' || path === '/admin/') return <Dashboard />;

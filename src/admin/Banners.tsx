@@ -66,7 +66,7 @@ export default function Banners() {
                   <tr key={item.id}>
                     <td><GripVertical size={16} style={{ color: '#cbd5e1', cursor: 'grab' }} /></td>
                     <td>{item.image_url && <img src={item.image_url} alt={item.title} />}</td>
-                    <td><strong>{item.title}</strong>{item.subtitle && <><br /><span style={{ fontSize: 12, color: '#64748b' }}>{item.subtitle}</span></>}</td>
+                    <td><strong>{item.title}</strong>{item.subtitle && <><br /><span style={{ fontSize: 12, color: '#6f675f' }}>{item.subtitle}</span></>}</td>
                     <td style={{ fontSize: 12 }}>{item.cta_text || '—'}</td>
                     <td>
                       <label className="toggle"><input type="checkbox" checked={item.status} onChange={() => toggleStatus(item)} /><span className="toggle-slider" /></label>

@@ -79,12 +79,12 @@ export default function Dashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
         <div className="a-card">
           <div className="section-title"><CalendarDays size={14} />Recent Events</div>
-          {recentEvents.length === 0 ? <p style={{ color: '#64748b', fontSize: 13 }}>No events yet.</p> : (
+          {recentEvents.length === 0 ? <p style={{ color: '#6f675f', fontSize: 13 }}>No events yet.</p> : (
             <table className="a-table">
               <tbody>
                 {recentEvents.map((ev) => (
                   <tr key={ev.id}>
-                    <td><strong style={{ fontSize: 13 }}>{ev.title}</strong><br /><span style={{ fontSize: 11, color: '#64748b' }}>{ev.category} · {ev.start_date}</span></td>
+                    <td><strong style={{ fontSize: 13 }}>{ev.title}</strong><br /><span style={{ fontSize: 11, color: '#6f675f' }}>{ev.category} · {ev.start_date}</span></td>
                     <td><span className={`badge ${ev.is_published ? 'badge-green' : 'badge-gray'}`}>{ev.is_published ? 'Published' : 'Draft'}</span></td>
                   </tr>
                 ))}
@@ -95,13 +95,13 @@ export default function Dashboard() {
 
         <div className="a-card">
           <div className="section-title"><Star size={14} />Recent Testimonials</div>
-          {recentTestimonials.length === 0 ? <p style={{ color: '#64748b', fontSize: 13 }}>No testimonials yet.</p> : (
+          {recentTestimonials.length === 0 ? <p style={{ color: '#6f675f', fontSize: 13 }}>No testimonials yet.</p> : (
             <table className="a-table">
               <tbody>
                 {recentTestimonials.map((t) => (
                   <tr key={t.id}>
-                    <td><strong style={{ fontSize: 13 }}>{t.name}</strong><br /><span style={{ fontSize: 11, color: '#64748b' }}>{t.designation}</span></td>
-                    <td style={{ fontSize: 11, color: '#64748b' }}>{new Date(t.created_at).toLocaleDateString()}</td>
+                    <td><strong style={{ fontSize: 13 }}>{t.name}</strong><br /><span style={{ fontSize: 11, color: '#6f675f' }}>{t.designation}</span></td>
+                    <td style={{ fontSize: 11, color: '#6f675f' }}>{new Date(t.created_at).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -111,12 +111,12 @@ export default function Dashboard() {
 
         <div className="a-card">
           <div className="section-title"><Mail size={14} />Recent Contact Messages</div>
-          {recentContacts.length === 0 ? <p style={{ color: '#64748b', fontSize: 13 }}>No messages yet.</p> : (
+          {recentContacts.length === 0 ? <p style={{ color: '#6f675f', fontSize: 13 }}>No messages yet.</p> : (
             <table className="a-table">
               <tbody>
                 {recentContacts.map((c) => (
                   <tr key={c.id}>
-                    <td><strong style={{ fontSize: 13 }}>{c.name}</strong><br /><span style={{ fontSize: 11, color: '#64748b' }}>{c.email}</span></td>
+                    <td><strong style={{ fontSize: 13 }}>{c.name}</strong><br /><span style={{ fontSize: 11, color: '#6f675f' }}>{c.email}</span></td>
                     <td><span className={`badge ${c.status === 'new' ? 'badge-blue' : c.status === 'read' ? 'badge-yellow' : 'badge-green'}`}>{c.status}</span></td>
                   </tr>
                 ))}

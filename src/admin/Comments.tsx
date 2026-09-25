@@ -79,12 +79,12 @@ export default function Comments() {
                     <td style={{ fontSize: 12 }}>{c.event_title ?? '—'}</td>
                     <td><strong>{c.name}</strong></td>
                     <td style={{ maxWidth: 280, fontSize: 13 }}>{c.comment}</td>
-                    <td style={{ fontSize: 11, color: '#64748b' }}>{new Date(c.created_at).toLocaleDateString()}</td>
+                    <td style={{ fontSize: 11, color: '#6f675f' }}>{new Date(c.created_at).toLocaleDateString()}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        {activeTab !== 'approved' && <button className="btn-icon" title="Approve" onClick={() => setStatus(c.id, 'approved')}><CheckCircle size={14} style={{ color: '#22c55e' }} /></button>}
+                        {activeTab !== 'approved' && <button className="btn-icon" title="Approve" onClick={() => setStatus(c.id, 'approved')}><CheckCircle size={14} style={{ color: '#2d8a4f' }} /></button>}
                         {activeTab !== 'hidden' && <button className="btn-icon" title="Hide" onClick={() => setStatus(c.id, 'hidden')}><EyeOff size={14} /></button>}
-                        {activeTab !== 'spam' && <button className="btn-icon" title="Spam" onClick={() => setStatus(c.id, 'spam')}><AlertTriangle size={14} style={{ color: '#f59e0b' }} /></button>}
+                        {activeTab !== 'spam' && <button className="btn-icon" title="Spam" onClick={() => setStatus(c.id, 'spam')}><AlertTriangle size={14} style={{ color: '#d97706' }} /></button>}
                         <button className="btn-icon danger" onClick={() => remove(c.id)}><Trash2 size={14} /></button>
                       </div>
                     </td>

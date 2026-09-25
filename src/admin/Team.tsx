@@ -75,7 +75,7 @@ export default function Team() {
                 {items.map((m) => (
                   <tr key={m.id}>
                     <td>{m.profile_image_url && <img src={m.profile_image_url} alt={m.display_name} />}</td>
-                    <td><strong>{m.display_name}</strong><br /><span style={{ fontSize: 11, color: '#64748b' }}>{m.occupation}</span></td>
+                    <td><strong>{m.display_name}</strong><br /><span style={{ fontSize: 11, color: '#6f675f' }}>{m.occupation}</span></td>
                     <td>{m.position}</td>
                     <td>{m.joining_year}</td>
                     <td><label className="toggle"><input type="checkbox" checked={m.is_published} onChange={() => toggle(m.id, 'is_published', m.is_published)} /><span className="toggle-slider" /></label></td>

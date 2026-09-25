@@ -66,7 +66,7 @@ export default function ContactMessages() {
                   <tr key={msg.id} style={{ cursor: 'pointer' }} onClick={() => openDetail(msg)}>
                     <td><strong>{msg.name}</strong></td>
                     <td style={{ fontSize: 12 }}>{msg.email}</td>
-                    <td style={{ fontSize: 11, color: '#64748b' }}>{new Date(msg.created_at).toLocaleDateString()}</td>
+                    <td style={{ fontSize: 11, color: '#6f675f' }}>{new Date(msg.created_at).toLocaleDateString()}</td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: 4 }}>
                         {activeTab !== 'read' && <button className="btn btn-ghost btn-sm" onClick={() => setStatus(msg.id, 'read')}>Mark Read</button>}
@@ -91,11 +91,11 @@ export default function ContactMessages() {
             </div>
             <div className="modal-body">
               <div style={{ display: 'grid', gap: 12 }}>
-                <div><strong style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>Name</strong><p>{detail.name}</p></div>
-                <div><strong style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>Phone</strong><p>{detail.phone}</p></div>
-                <div><strong style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>Email</strong><p>{detail.email}</p></div>
-                <div><strong style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>Message</strong><p style={{ whiteSpace: 'pre-wrap' }}>{detail.message}</p></div>
-                <div><strong style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>Received</strong><p>{new Date(detail.created_at).toLocaleString()}</p></div>
+                <div><strong style={{ fontSize: 11, color: '#6f675f', textTransform: 'uppercase' }}>Name</strong><p>{detail.name}</p></div>
+                <div><strong style={{ fontSize: 11, color: '#6f675f', textTransform: 'uppercase' }}>Phone</strong><p>{detail.phone}</p></div>
+                <div><strong style={{ fontSize: 11, color: '#6f675f', textTransform: 'uppercase' }}>Email</strong><p>{detail.email}</p></div>
+                <div><strong style={{ fontSize: 11, color: '#6f675f', textTransform: 'uppercase' }}>Message</strong><p style={{ whiteSpace: 'pre-wrap' }}>{detail.message}</p></div>
+                <div><strong style={{ fontSize: 11, color: '#6f675f', textTransform: 'uppercase' }}>Received</strong><p>{new Date(detail.created_at).toLocaleString()}</p></div>
               </div>
             </div>
             <div className="modal-footer">

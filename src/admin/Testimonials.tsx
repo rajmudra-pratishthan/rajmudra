@@ -60,8 +60,8 @@ export default function Testimonials() {
                 {items.map((t) => (
                   <tr key={t.id}>
                     <td>{t.photo_url && <img src={t.photo_url} alt={t.name} />}</td>
-                    <td><strong>{t.name}</strong><br /><span style={{ fontSize: 11, color: '#64748b' }}>{t.designation}{t.organization ? ` · ${t.organization}` : ''}</span></td>
-                    <td style={{ maxWidth: 240 }}><span style={{ fontSize: 12, color: '#64748b', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.message}</span></td>
+                    <td><strong>{t.name}</strong><br /><span style={{ fontSize: 11, color: '#6f675f' }}>{t.designation}{t.organization ? ` · ${t.organization}` : ''}</span></td>
+                    <td style={{ maxWidth: 240 }}><span style={{ fontSize: 12, color: '#6f675f', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.message}</span></td>
                     <td><label className="toggle"><input type="checkbox" checked={t.status} onChange={async () => { await supabase!.from('testimonials').update({ status: !t.status }).eq('id', t.id); load(); }} /><span className="toggle-slider" /></label></td>
                     <td><label className="toggle"><input type="checkbox" checked={t.is_featured} onChange={async () => { await supabase!.from('testimonials').update({ is_featured: !t.is_featured }).eq('id', t.id); load(); }} /><span className="toggle-slider" /></label></td>
                     <td><div style={{ display: 'flex', gap: 6 }}>
@@ -85,7 +85,7 @@ export default function Testimonials() {
               {preview.photo_url && <img src={preview.photo_url} alt={preview.name} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', margin: '0 auto 12px' }} />}
               <p style={{ fontSize: 15, fontStyle: 'italic', color: '#374151', marginBottom: 16 }}>"{preview.message}"</p>
               <strong>{preview.name}</strong>
-              <p style={{ fontSize: 12, color: '#64748b' }}>{preview.designation}{preview.organization ? ` · ${preview.organization}` : ''}</p>
+              <p style={{ fontSize: 12, color: '#6f675f' }}>{preview.designation}{preview.organization ? ` · ${preview.organization}` : ''}</p>
             </div>
           </div>
         </div>

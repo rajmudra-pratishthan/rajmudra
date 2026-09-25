@@ -54,7 +54,7 @@ export default function InstagramReels() {
                   <tr key={r.id}>
                     <td>{r.thumbnail_url && <img src={r.thumbnail_url} alt={r.title} />}</td>
                     <td><strong>{r.title || '—'}</strong></td>
-                    <td><a href={r.reel_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#3b82f6', maxWidth: 200, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.reel_url}</a></td>
+                    <td><a href={r.reel_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#f26a00', maxWidth: 200, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.reel_url}</a></td>
                     <td><label className="toggle"><input type="checkbox" checked={r.is_active} onChange={async () => { await supabase!.from('instagram_reels').update({ is_active: !r.is_active }).eq('id', r.id); load(); }} /><span className="toggle-slider" /></label></td>
                     <td>{r.display_order}</td>
                     <td><div style={{ display: 'flex', gap: 6 }}>
