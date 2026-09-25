@@ -267,6 +267,15 @@ footer { background: #28231e; color: #ddd1c4; padding: 70px 0 20px; }
 .donate-placeholder strong { margin: 15px 0 7px; font-weight: 600; }
 .donate-placeholder span, .donate-placeholder small { color: var(--muted); font-size: 12px; line-height: 1.7; }
 .donate-placeholder > svg:nth-of-type(2) { margin-top: 25px; }
+.donate-details { background: white; padding: 30px; border: 1px solid var(--line); border-radius: var(--radius); }
+.donate-section-block { margin-bottom: 22px; }
+.donate-section-block h3 { font-size: 14px; font-weight: 600; margin: 0 0 10px; color: var(--orange-dark); }
+.donate-section-block p { font-size: 13px; color: var(--muted); margin: 4px 0; }
+.donate-section-block p strong { color: var(--ink); display: inline-block; min-width: 120px; }
+.donate-instructions { font-size: 12px; color: var(--muted); line-height: 1.7; margin: 16px 0; padding-top: 16px; border-top: 1px solid var(--line); }
+.donate-trust { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.donate-trust svg { color: var(--orange); }
+.donate-trust small { font-size: 11px; color: var(--muted); }
 .contact-section { background: #fff; }
 .contact-grid { display: grid; grid-template-columns: .85fr 1.15fr; gap: 120px; align-items: start; }
 .contact-lines { border-top: 1px solid var(--line); margin-top: 35px; }

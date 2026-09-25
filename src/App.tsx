@@ -3,7 +3,20 @@ const AdminApp = lazy(() => import('./admin/AdminApp'));
 import { ArrowRight, ArrowLeft, Award, BookOpen, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, CircleArrowOutUpRight, Heart, Instagram, Landmark, Menu, MessageCircle, Palette, Send, ShieldCheck, Sparkles, Trophy, Users, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-type Event = { id?: string; slug: string; title: string; description: string; category: string; event_date: string; location: string; image_url: string; highlights?: string[] };
+type Event = {
+  id?: string; slug: string; title: string; description: string; category: string;
+  event_date: string; location: string; image_url: string; highlights?: string[];
+  short_description?: string; full_description?: string;
+};
+type TeamMember = { id: string; display_name: string; position: string; occupation: string; profile_image_url: string | null };
+type Testimonial = { id: string; name: string; designation: string; organization: string; message: string; photo_url: string | null };
+type Reel = { id: string; reel_url: string; title: string; thumbnail_url: string | null };
+type DonationData = {
+  page_title: string; page_description: string; upi_id: string; upi_display_name: string;
+  qr_code_url: string; bank_name: string; account_holder: string; account_number: string;
+  ifsc: string; branch: string; instructions: string;
+};
+type OrgMap = Record<string, string>;
 type IconType = typeof Users;
 
 const images = {
@@ -26,22 +39,32 @@ const sampleEvents: Event[] = [
   { slug: 'community-sports-2026', title: 'Youth Sports Festival', description: 'A day of teamwork, discipline and healthy competition for young people in our community.', category: 'Sports', event_date: '2026-08-09', location: 'Community Sports Ground', image_url: images.sports, highlights: ['Cricket', 'Volleyball', 'Tug of war'] },
 ];
 
+const fallbackTeam: TeamMember[] = [
+  { id: '1', display_name: 'Name coming soon', position: 'President', occupation: 'Social service', profile_image_url: images.community },
+  { id: '2', display_name: 'Name coming soon', position: 'Vice President', occupation: 'Community development', profile_image_url: images.gathering },
+  { id: '3', display_name: 'Name coming soon', position: 'Secretary', occupation: 'Education', profile_image_url: images.education },
+  { id: '4', display_name: 'Name coming soon', position: 'Treasurer', occupation: 'Finance & operations', profile_image_url: images.school },
+  { id: '5', display_name: 'Name coming soon', position: 'Program coordinator', occupation: 'Arts and culture', profile_image_url: images.festival },
+  { id: '6', display_name: 'Name coming soon', position: 'Outreach lead', occupation: 'Sports and youth', profile_image_url: images.sports },
+];
+
+const fallbackTestimonials: Testimonial[] = [
+  { id: '1', name: 'Community well-wisher', designation: 'Appreciation Message', organization: 'Rajmudra Pratishthan', message: 'The organization\u2019s community-first initiatives and consistent work are truly inspiring.', photo_url: null },
+  { id: '2', name: 'School teacher', designation: 'Education partner', organization: 'Local School', message: 'Their work to preserve culture while involving the next generation is deeply admirable.', photo_url: null },
+  { id: '3', name: 'Local resident', designation: 'Community member', organization: 'Maharashtra', message: 'This is a sincere organization that brings every part of the community into the conversation.', photo_url: null },
+  { id: '4', name: 'Volunteer', designation: 'Active member', organization: 'Rajmudra Pratishthan', message: 'Watching children and elders celebrate together at their events is a beautiful sight.', photo_url: null },
+  { id: '5', name: 'Donor', designation: 'Supporter', organization: 'Rajmudra Pratishthan', message: 'They turned a simple idea into a movement that now touches thousands of lives.', photo_url: null },
+];
+
+const fallbackReels: Reel[] = [
+  { id: '1', reel_url: 'https://instagram.com', title: '01', thumbnail_url: images.culture },
+  { id: '2', reel_url: 'https://instagram.com', title: '02', thumbnail_url: images.rangoli },
+  { id: '3', reel_url: 'https://instagram.com', title: '03', thumbnail_url: images.sports },
+  { id: '4', reel_url: 'https://instagram.com', title: '04', thumbnail_url: images.community },
+];
+
 const navItems = [['Home', '/'], ['About us', '/about'], ['Our work', '/#work'], ['Events', '/events'], ['Our team', '/team'], ['Contact', '/#contact']];
-const teamMembers: { position: string; occupation: string; image: string }[] = [
-  { position: 'President', occupation: 'Social service', image: images.community },
-  { position: 'Vice President', occupation: 'Community development', image: images.gathering },
-  { position: 'Secretary', occupation: 'Education', image: images.education },
-  { position: 'Treasurer', occupation: 'Finance & operations', image: images.school },
-  { position: 'Program coordinator', occupation: 'Arts and culture', image: images.festival },
-  { position: 'Outreach lead', occupation: 'Sports and youth', image: images.sports },
-];
-const testimonials: { quote: string; author: string; role: string }[] = [
-  { quote: 'The organization\u2019s community-first initiatives and consistent work are truly inspiring.', author: 'Community well-wisher', role: 'Appreciation Message' },
-  { quote: 'Their work to preserve culture while involving the next generation is deeply admirable.', author: 'School teacher', role: 'Education partner' },
-  { quote: 'This is a sincere organization that brings every part of the community into the conversation.', author: 'Local resident', role: 'Community member' },
-  { quote: 'Watching children and elders celebrate together at their events is a beautiful sight.', author: 'Volunteer', role: 'Active member' },
-  { quote: 'They turned a simple idea into a movement that now touches thousands of lives.', author: 'Donor', role: 'Supporter' },
-];
+
 function useSlider(count: number, perView: number) {
   const [index, setIndex] = useState(0);
   const max = Math.max(0, count - perView);
@@ -112,14 +135,18 @@ function StatCounter({ value, label, suffix }: { value: number; label: string; s
   const { val, ref } = useCountUp(value, suffix);
   return <div className="stat" ref={ref}><strong>{val}</strong><span>{label}</span></div>;
 }
-function Stats() {
+function Stats({ org }: { org: OrgMap }) {
+  const years = parseInt(org.stat_years || '10', 10);
+  const members = parseInt(org.member_count || '50', 10);
+  const activities = parseInt(org.activity_count || '100', 10);
+  const families = parseInt(org.family_count || '1000', 10);
   return (
     <section className="stats">
       <div className="container stats-grid">
-        <StatCounter value={10} suffix="+" label="Years of social service" />
-        <StatCounter value={50} suffix="+" label="Active members" />
-        <StatCounter value={100} suffix="+" label="Social and cultural initiatives" />
-        <StatCounter value={1000} suffix="+" label="Families connected" />
+        <StatCounter value={years} suffix="+" label="Years of social service" />
+        <StatCounter value={members} suffix="+" label="Active members" />
+        <StatCounter value={activities} suffix="+" label="Social and cultural initiatives" />
+        <StatCounter value={families} suffix="+" label="Families connected" />
       </div>
     </section>
   );
@@ -129,14 +156,24 @@ function EventCard({ event }: { event: Event }) { return <article className="eve
 function EventsSection({ events }: { events: Event[] }) { return <section className="section events-section"><div className="container"><div className="section-heading"><div><SectionLabel>Moments that bring us together</SectionLabel><h2>Upcoming events</h2></div><Button href="/events" secondary>View all events</Button></div><div className="events-grid">{events.slice(0, 3).map((event) => <EventCard event={event} key={event.slug} />)}</div></div></section>; }
 
 function TimelineSection() { const items = [['26 January', 'Republic Day', 'Flag hoisting, food support and gratitude for community contributors'], ['14 April', 'Dr. B. R. Ambedkar Jayanti', 'A message of equality and meaningful social initiatives'], ['15 August', 'Independence Day', 'School kits, books and educational support for students'], ['March–April', 'Shivaji Maharaj Birth Celebration', 'Competitions, art, sport and a community-wide celebration'], ['Dussehra · Diwali', 'Community gratitude', 'Mahaprasad, appreciation, gifts and time together']]; return <section className="section timeline-section"><div className="container timeline-grid"><div><SectionLabel>Across the year</SectionLabel><h2>Rooted in tradition,<br /><em>moving forward.</em></h2><p>Every festival, initiative and gathering is a chance to deepen our connection with the community.</p></div><div className="timeline">{items.map(([date, title, text], index) => <div className="timeline-item" key={title}><div className="timeline-marker">{String(index + 1).padStart(2, '0')}</div><div><span>{date}</span><h3>{title}</h3><p>{text}</p></div></div>)}</div></div></section>; }
-function InstagramSection() { return <section className="section instagram-section"><div className="container"><div className="section-heading"><div><SectionLabel>Digital memories</SectionLabel><h2>Moments from Instagram</h2></div><a className="instagram-link" href="https://instagram.com" target="_blank" rel="noreferrer"><Instagram size={17} /> @rajmudrapratishthan <CircleArrowOutUpRight size={15} /></a></div><div className="reel-row">{[images.culture, images.rangoli, images.sports, images.community].map((image, index) => <a className="reel-card" href="https://instagram.com" target="_blank" rel="noreferrer" key={image}><img src={image} alt="Rajmudra Pratishthan Instagram moment" loading="lazy" /><span><Instagram size={18} /> 0{index + 1}</span></a>)}</div></div></section>; }
-function Footer() { return <footer><div className="container footer-top"><div><Logo compact /><p>Working for society, rooted in culture.<br />Together, we can shape a better tomorrow.</p></div><div className="footer-links"><strong>Quick links</strong>{navItems.slice(0, 5).map(([label, href]) => <a href={href} key={href}>{label}</a>)}</div><div className="footer-links"><strong>Contact</strong><span>Maharashtra, India</span><span>Official details coming soon</span><a href="/#contact">Contact us <ArrowRight size={14} /></a></div><div className="footer-note"><ShieldCheck size={18} /><span>Trust, transparency<br />and community.</span></div></div><div className="container footer-bottom"><span>© 2026 Rajmudra Pratishthan. All rights reserved.</span><span>Privacy Policy · Donation Policy</span></div></footer>; }
-function TeamSlider() {
-  const perView = 3; const { index, next, prev, canNext, canPrev, max } = useSlider(teamMembers.length, perView);
-  return <section className="section team-slider-section" id="team-preview"><div className="container"><div className="section-heading"><div><SectionLabel>The people behind the work</SectionLabel><h2>Meet our team</h2></div><div className="slider-nav"><button onClick={prev} disabled={!canPrev} aria-label="Previous"><ArrowLeft size={18} /></button><button onClick={next} disabled={!canNext} aria-label="Next"><ArrowRight size={18} /></button></div></div><div className="slider-viewport"><div className="slider-track" style={{ transform: `translateX(-${index * (100 / perView)}%)` }}>{teamMembers.map((member, i) => <article className="member-card slider-slide" key={i} style={{ width: `${100 / perView}%` }}><img src={member.image} alt={member.position} loading="lazy" /><div><span>{member.position}</span><h3>Name coming soon</h3><p>{member.occupation}</p></div></article>)}</div></div><div className="slider-dots">{Array.from({ length: max + 1 }).map((_, i) => <button key={i} className={i === index ? 'active' : ''} onClick={() => {}} aria-label={`Go to slide ${i + 1}`} />)}</div><div className="slider-cta"><Button href="/team">Meet our whole team</Button></div></div></section>;
+function InstagramSection({ reels }: { reels: Reel[] }) {
+  const display = reels.length > 0 ? reels : fallbackReels;
+  return <section className="section instagram-section"><div className="container"><div className="section-heading"><div><SectionLabel>Digital memories</SectionLabel><h2>Moments from Instagram</h2></div><a className="instagram-link" href="https://instagram.com" target="_blank" rel="noreferrer"><Instagram size={17} /> @rajmudrapratishthan <CircleArrowOutUpRight size={15} /></a></div><div className="reel-row">{display.map((reel, index) => <a className="reel-card" href={reel.reel_url} target="_blank" rel="noreferrer" key={reel.id}><img src={reel.thumbnail_url || images.culture} alt="Rajmudra Pratishthan Instagram moment" loading="lazy" /><span><Instagram size={18} /> 0{index + 1}</span></a>)}</div></div></section>;
 }
-function TestimonialSlider() {
-  const track = [...testimonials, ...testimonials];
+function Footer({ org }: { org: OrgMap }) {
+  const address = org.address || 'Maharashtra, India';
+  const email = org.email || 'Official email coming soon';
+  const phone = org.phone || 'Official number coming soon';
+  return <footer><div className="container footer-top"><div><Logo compact /><p>Working for society, rooted in culture.<br />Together, we can shape a better tomorrow.</p></div><div className="footer-links"><strong>Quick links</strong>{navItems.slice(0, 5).map(([label, href]) => <a href={href} key={href}>{label}</a>)}</div><div className="footer-links"><strong>Contact</strong><span>{address}</span><span>{email}</span><a href="/#contact">Contact us <ArrowRight size={14} /></a></div><div className="footer-note"><ShieldCheck size={18} /><span>Trust, transparency<br />and community.</span></div></div><div className="container footer-bottom"><span>© 2026 Rajmudra Pratishthan. All rights reserved.</span><span>Privacy Policy · Donation Policy</span></div></footer>;
+}
+function TeamSlider({ team }: { team: TeamMember[] }) {
+  const perView = 3; const members = team.length > 0 ? team : fallbackTeam;
+  const { index, next, prev, canNext, canPrev, max } = useSlider(members.length, perView);
+  return <section className="section team-slider-section" id="team-preview"><div className="container"><div className="section-heading"><div><SectionLabel>The people behind the work</SectionLabel><h2>Meet our team</h2></div><div className="slider-nav"><button onClick={prev} disabled={!canPrev} aria-label="Previous"><ArrowLeft size={18} /></button><button onClick={next} disabled={!canNext} aria-label="Next"><ArrowRight size={18} /></button></div></div><div className="slider-viewport"><div className="slider-track" style={{ transform: `translateX(-${index * (100 / perView)}%)` }}>{members.map((member, i) => <article className="member-card slider-slide" key={member.id || i} style={{ width: `${100 / perView}%` }}><img src={member.profile_image_url || images.community} alt={member.position} loading="lazy" /><div><span>{member.position}</span><h3>{member.display_name}</h3><p>{member.occupation}</p></div></article>)}</div></div><div className="slider-dots">{Array.from({ length: max + 1 }).map((_, i) => <button key={i} className={i === index ? 'active' : ''} onClick={() => {}} aria-label={`Go to slide ${i + 1}`} />)}</div><div className="slider-cta"><Button href="/team">Meet our whole team</Button></div></div></section>;
+}
+function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
+  const list = testimonials.length > 0 ? testimonials : fallbackTestimonials;
+  const track = [...list, ...list];
   return (
     <section className="section testimonial-slider-section">
       <div className="container">
@@ -151,12 +188,14 @@ function TestimonialSlider() {
           {track.map((t, i) => (
             <article className="testi-card" key={i}>
               <div className="testi-icon">&ldquo;</div>
-              <p className="testi-text">{t.quote}</p>
+              <p className="testi-text">{t.message}</p>
               <div className="testi-user">
-                <div className="testi-img">{t.author.charAt(0)}</div>
+                {t.photo_url
+                  ? <div className="testi-img"><img src={t.photo_url} alt={t.name} /></div>
+                  : <div className="testi-img">{t.name.charAt(0)}</div>}
                 <div className="testi-info">
-                  <strong className="testi-name">{t.author}</strong>
-                  <span className="testi-meta">{t.role} &middot; Rajmudra Pratishthan</span>
+                  <strong className="testi-name">{t.name}</strong>
+                  <span className="testi-meta">{t.designation}{t.organization ? ` · ${t.organization}` : ''}</span>
                 </div>
               </div>
             </article>
@@ -166,18 +205,84 @@ function TestimonialSlider() {
     </section>
   );
 }
-function HomeContact() {
+function HomeContact({ org }: { org: OrgMap }) {
   const [sent, setSent] = useState(false); const [error, setError] = useState('');
+  const address = org.address || 'Maharashtra, India';
+  const email = org.email || 'Official email coming soon';
+  const phone = org.phone || 'Official number coming soon';
   async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setError(''); const form = new FormData(event.currentTarget); if (supabase) { const { error: submitError } = await supabase.from('contact_messages').insert({ name: String(form.get('name')), phone: String(form.get('phone')), email: String(form.get('email')), message: String(form.get('message')) }); if (submitError) { setError('There was a problem sending your message. Please try again.'); return; } } setSent(true); }
-  return <section className="section home-contact-section" id="contact"><div className="container home-contact-grid"><div className="contact-info"><SectionLabel>Get in touch</SectionLabel><h2>Let's make something <em>meaningful.</em></h2><p>Your time, skills and support can all make a lasting difference.</p><div className="contact-lines"><span><strong>Location</strong>Maharashtra, India</span><span><strong>Email</strong>Official email coming soon</span><span><strong>Phone / WhatsApp</strong>Official number coming soon</span></div></div><div className="contact-form-wrap">{sent ? <div className="success-state"><div><Send size={22} /></div><h3>Message received.</h3><p>Thank you for reaching out. Our team will get back to you soon.</p><a href="/">Back to home <ArrowRight size={15} /></a></div> : <form onSubmit={submit}><h3>Send a message</h3><label>Your name<input name="name" required placeholder="Full name" /></label><div className="form-row"><label>Phone<input name="phone" required placeholder="Phone number" /></label><label>Email<input name="email" required type="email" placeholder="Email address" /></label></div><label>Your message<textarea name="message" required rows={5} placeholder="How can we help?" /></label>{error && <p className="form-error">{error}</p>}<button className="button" type="submit">Send message <Send size={16} /></button></form>}</div></div></section>;
+  return <section className="section home-contact-section" id="contact"><div className="container home-contact-grid"><div className="contact-info"><SectionLabel>Get in touch</SectionLabel><h2>Let's make something <em>meaningful.</em></h2><p>Your time, skills and support can all make a lasting difference.</p><div className="contact-lines"><span><strong>Location</strong>{address}</span><span><strong>Email</strong>{email}</span><span><strong>Phone / WhatsApp</strong>{phone}</span></div></div><div className="contact-form-wrap">{sent ? <div className="success-state"><div><Send size={22} /></div><h3>Message received.</h3><p>Thank you for reaching out. Our team will get back to you soon.</p><a href="/">Back to home <ArrowRight size={15} /></a></div> : <form onSubmit={submit}><h3>Send a message</h3><label>Your name<input name="name" required placeholder="Full name" /></label><div className="form-row"><label>Phone<input name="phone" required placeholder="Phone number" /></label><label>Email<input name="email" required type="email" placeholder="Email address" /></label></div><label>Your message<textarea name="message" required rows={5} placeholder="How can we help?" /></label>{error && <p className="form-error">{error}</p>}<button className="button" type="submit">Send message <Send size={16} /></button></form>}</div></div></section>;
 }
-function Home({ events }: { events: Event[] }) { return <><Header /><main><Hero /><EventsSection events={events} /><Stats /><WorkSection /><TeamSlider /><TestimonialSlider /><InstagramSection /><HomeContact /><section className="cta-strip"><div className="container"><div><SectionLabel>Your support matters</SectionLabel><h2>Make a difference in the community.</h2></div><Button href="/donate">Donate now</Button></div></section></main><Footer /></>; }
-function About() { return <><Header /><main className="inner-page"><InnerHero label="Our identity" title="About us" desc="More than a decade of social service, culture and community development." image={images.gathering} /><section className="section about-content"><div className="container about-grid"><div><img src={images.community} alt="Community members gathered together" loading="lazy" /></div><div><SectionLabel>Rajmudra Pratishthan</SectionLabel><h2>One organization. Many dreams. <em>One shared journey.</em></h2><p>Rajmudra Pratishthan is a Maharashtra-based social and cultural organization. We work across education, art, sport, culture and community development, bringing every part of society into the conversation.</p><div className="about-facts"><span><strong>2015</strong>Founded</span><span><strong>50+</strong>Active members</span><span><strong>6</strong>Focus areas</span></div></div></div></section><TimelineSection /></main><Footer /></>; }
-function EventsPage({ events }: { events: Event[] }) { const [query, setQuery] = useState(''); const filtered = useMemo(() => events.filter((event) => event.title.toLowerCase().includes(query.toLowerCase()) || event.category.toLowerCase().includes(query.toLowerCase())), [events, query]); return <><Header /><main className="inner-page"><InnerHero label="Programs and celebrations" title="Events" desc="Gatherings, festivals and initiatives that connect our community." image={images.culture} /><section className="section events-list"><div className="container"><div className="search-row"><div className="search-box"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search events" /></div><button className="filter-button">All years <ChevronDown size={16} /></button></div><div className="events-grid">{filtered.map((event) => <EventCard event={event} key={event.slug} />)}</div>{filtered.length === 0 && <div className="empty-state">No events matched your search.</div>}</div></section></main><Footer /></>; }
-function EventDetail({ event }: { event: Event }) { const [liked, setLiked] = useState(false); return <><Header /><main className="inner-page detail-page"><div className="container"><a className="back-link" href="/events"><ChevronLeft size={16} /> All events</a><div className="detail-hero"><img src={event.image_url} alt={event.title} /><div className="detail-overlay"><span>{event.category}</span><h1>{event.title}</h1><div><CalendarDays size={16} /> {new Date(event.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} <span>·</span> {event.location}</div></div></div><div className="detail-grid"><article><SectionLabel>About the event</SectionLabel><h2>A beautiful moment <em>together.</em></h2><p>{event.description}</p><p>Children, students, parents and senior citizens come together for an experience that reflects our commitment to an active, connected community.</p><div className="highlight-box"><h3>Event highlights</h3>{(event.highlights ?? []).map((highlight) => <span key={highlight}><Sparkles size={15} /> {highlight}</span>)}</div></article><aside className="detail-aside"><button className={`like-button ${liked ? 'liked' : ''}`} onClick={() => setLiked(!liked)}><Heart size={19} fill={liked ? 'currentColor' : 'none'} /> Like <span>{liked ? '1' : '0'}</span></button><div className="thanks-card"><Award size={22} /><h3>With thanks</h3><p>Our heartfelt thanks to every volunteer, supporter, donor and community member who makes these initiatives possible.</p></div></aside></div></div></main><Footer /></>; }
+function Home({ events, team, testimonials, reels, org }: { events: Event[]; team: TeamMember[]; testimonials: Testimonial[]; reels: Reel[]; org: OrgMap }) { return <><Header /><main><Hero /><EventsSection events={events} /><Stats org={org} /><WorkSection /><TeamSlider team={team} /><TestimonialSlider testimonials={testimonials} /><InstagramSection reels={reels} /><HomeContact org={org} /><section className="cta-strip"><div className="container"><div><SectionLabel>Your support matters</SectionLabel><h2>Make a difference in the community.</h2></div><Button href="/donate">Donate now</Button></div></section></main><Footer org={org} /></>; }
+function About({ org }: { org: OrgMap }) {
+  const foundationYear = org.foundation_year || '2015';
+  const memberCount = org.member_count || '50+';
+  return <><Header /><main className="inner-page"><InnerHero label="Our identity" title="About us" desc="More than a decade of social service, culture and community development." image={images.gathering} /><section className="section about-content"><div className="container about-grid"><div><img src={images.community} alt="Community members gathered together" loading="lazy" /></div><div><SectionLabel>Rajmudra Pratishthan</SectionLabel><h2>One organization. Many dreams. <em>One shared journey.</em></h2><p>Rajmudra Pratishthan is a Maharashtra-based social and cultural organization. We work across education, art, sport, culture and community development, bringing every part of society into the conversation.</p><div className="about-facts"><span><strong>{foundationYear}</strong>Founded</span><span><strong>{memberCount}</strong>Active members</span><span><strong>6</strong>Focus areas</span></div></div></div></section><TimelineSection /></main><Footer org={org} /></>; }
+function EventsPage({ events }: { events: Event[] }) { const [query, setQuery] = useState(''); const filtered = useMemo(() => events.filter((event) => event.title.toLowerCase().includes(query.toLowerCase()) || event.category.toLowerCase().includes(query.toLowerCase())), [events, query]); return <><Header /><main className="inner-page"><InnerHero label="Programs and celebrations" title="Events" desc="Gatherings, festivals and initiatives that connect our community." image={images.culture} /><section className="section events-list"><div className="container"><div className="search-row"><div className="search-box"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search events" /></div><button className="filter-button">All years <ChevronDown size={16} /></button></div><div className="events-grid">{filtered.map((event) => <EventCard event={event} key={event.slug} />)}</div>{filtered.length === 0 && <div className="empty-state">No events matched your search.</div>}</div></section></main><Footer org={{}} /></>; }
+function EventDetail({ event }: { event: Event }) { const [liked, setLiked] = useState(false); return <><Header /><main className="inner-page detail-page"><div className="container"><a className="back-link" href="/events"><ChevronLeft size={16} /> All events</a><div className="detail-hero"><img src={event.image_url} alt={event.title} /><div className="detail-overlay"><span>{event.category}</span><h1>{event.title}</h1><div><CalendarDays size={16} /> {new Date(event.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} <span>·</span> {event.location}</div></div></div><div className="detail-grid"><article><SectionLabel>About the event</SectionLabel><h2>A beautiful moment <em>together.</em></h2><p>{event.description}</p><p>Children, students, parents and senior citizens come together for an experience that reflects our commitment to an active, connected community.</p><div className="highlight-box"><h3>Event highlights</h3>{(event.highlights ?? []).map((highlight) => <span key={highlight}><Sparkles size={15} /> {highlight}</span>)}</div></article><aside className="detail-aside"><button className={`like-button ${liked ? 'liked' : ''}`} onClick={() => setLiked(!liked)}><Heart size={19} fill={liked ? 'currentColor' : 'none'} /> Like <span>{liked ? '1' : '0'}</span></button><div className="thanks-card"><Award size={22} /><h3>With thanks</h3><p>Our heartfelt thanks to every volunteer, supporter, donor and community member who makes these initiatives possible.</p></div></aside></div></div></main><Footer org={{}} /></>; }
 
-function Donate() { return <><Header /><main className="inner-page"><InnerHero label="Your support" title="Donate" desc="Make a difference in the community." image={images.volunteers} /><section className="section donate-section"><div className="container donate-card"><div><Sparkles size={25} /><h2>Your support helps us create more social, educational and cultural opportunities.</h2><p>Please verify official details before making a donation. Public donation information will be added here by the organization.</p></div><div className="donate-placeholder"><Landmark size={32} /><strong>Official details coming soon</strong><span>UPI, QR code and bank details<br />will be published by the organization.</span><ShieldCheck size={17} /><small>Your safety and transparency matter to us.</small></div></div></section></main><Footer /></>; }
-function Team() { return <><Header /><main className="inner-page"><InnerHero label="The people behind the work" title="Our team" desc="A dedicated group turning shared values into action." image={images.gathering} /><section className="section team-section"><div className="container"><div className="team-grid">{teamMembers.map((member, i) => <article className="member-card" key={i}><img src={member.image} alt={member.position} loading="lazy" /><div><span>{member.position}</span><h3>Name coming soon</h3><p>{member.occupation}</p></div></article>)}</div></div></section></main><Footer /></>; }
-function Testimonials() { return <><Header /><main className="inner-page"><InnerHero label="Community trust" title="Testimonials" desc="Words of appreciation from people who have shared our journey." image={images.culture} /><section className="section testimonial-section"><div className="container testimonial-grid">{testimonials.map((t, i) => <article className="quote-card" key={i}><MessageCircle size={22} /><p>{`\u201C${t.quote}\u201D`}</p><strong>{t.author}</strong><span>{t.role} · Rajmudra Pratishthan</span><small>0{i + 1}</small></article>)}</div></section></main><Footer /></>; }
-function App() { const [events, setEvents] = useState<Event[]>(sampleEvents); useEffect(() => { if (!supabase) return; supabase.from('public_events').select('*').eq('is_published', true).order('event_date', { ascending: true }).then(({ data }) => { if (data && data.length > 0) setEvents(data as Event[]); }); }, []); const path = window.location.pathname; if (path.startsWith('/admin')) return <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading…</div>}><AdminApp /></Suspense>; if (path === '/about') return <About />; if (path === '/events') return <EventsPage events={events} />; if (path === '/team') return <Team />; if (path === '/testimonials') return <Testimonials />; if (path === '/donate') return <Donate />; if (path === '/contact') { window.location.replace('/#contact'); return null; } if (path.startsWith('/events/')) return <EventDetail event={events.find((item) => item.slug === path.split('/')[2]) ?? events[0]} />; return <Home events={events} />; }
+function Donate({ donation, org }: { donation: DonationData | null; org: OrgMap }) {
+  const hasDetails = donation && (donation.upi_id || donation.bank_name || donation.account_number);
+  return <><Header /><main className="inner-page"><InnerHero label="Your support" title="Donate" desc="Make a difference in the community." image={images.volunteers} /><section className="section donate-section"><div className="container donate-card"><div><Sparkles size={25} /><h2>{donation?.page_title || 'Your support helps us create more social, educational and cultural opportunities.'}</h2><p>{donation?.page_description || 'Please verify official details before making a donation. Public donation information will be added here by the organization.'}</p></div>{hasDetails ? <div className="donate-details"><div className="donate-section-block"><h3>UPI</h3>{donation.upi_id && <p><strong>UPI ID:</strong> {donation.upi_id}</p>}{donation.upi_display_name && <p><strong>Name:</strong> {donation.upi_display_name}</p>}{donation.qr_code_url && <img src={donation.qr_code_url} alt="QR Code" style={{ width: 160, height: 160, borderRadius: 12, marginTop: 12 }} />}</div>{(donation.bank_name || donation.account_number) && <div className="donate-section-block"><h3>Bank Details</h3>{donation.bank_name && <p><strong>Bank:</strong> {donation.bank_name}</p>}{donation.account_holder && <p><strong>Account Holder:</strong> {donation.account_holder}</p>}{donation.account_number && <p><strong>Account Number:</strong> {donation.account_number}</p>}{donation.ifsc && <p><strong>IFSC:</strong> {donation.ifsc}</p>}{donation.branch && <p><strong>Branch:</strong> {donation.branch}</p>}</div>}{donation.instructions && <p className="donate-instructions">{donation.instructions}</p>}<div className="donate-trust"><ShieldCheck size={17} /><small>Your safety and transparency matter to us.</small></div></div> : <div className="donate-placeholder"><Landmark size={32} /><strong>Official details coming soon</strong><span>UPI, QR code and bank details<br />will be published by the organization.</span><ShieldCheck size={17} /><small>Your safety and transparency matter to us.</small></div>}</div></section></main><Footer org={org} /></>; }
+function Team({ team, org }: { team: TeamMember[]; org: OrgMap }) {
+  const members = team.length > 0 ? team : fallbackTeam;
+  return <><Header /><main className="inner-page"><InnerHero label="The people behind the work" title="Our team" desc="A dedicated group turning shared values into action." image={images.gathering} /><section className="section team-section"><div className="container"><div className="team-grid">{members.map((member, i) => <article className="member-card" key={member.id || i}><img src={member.profile_image_url || images.community} alt={member.position} loading="lazy" /><div><span>{member.position}</span><h3>{member.display_name}</h3><p>{member.occupation}</p></div></article>)}</div></div></section></main><Footer org={org} /></>; }
+function Testimonials({ testimonials, org }: { testimonials: Testimonial[]; org: OrgMap }) {
+  const list = testimonials.length > 0 ? testimonials : fallbackTestimonials;
+  return <><Header /><main className="inner-page"><InnerHero label="Community trust" title="Testimonials" desc="Words of appreciation from people who have shared our journey." image={images.culture} /><section className="section testimonial-section"><div className="container testimonial-grid">{list.map((t, i) => <article className="quote-card" key={t.id || i}><MessageCircle size={22} /><p>{`\u201C${t.message}\u201D`}</p><strong>{t.name}</strong><span>{t.designation}{t.organization ? ` · ${t.organization}` : ''}</span><small>0{i + 1}</small></article>)}</div></section></main><Footer org={org} /></>; }
+
+function useSiteData() {
+  const [events, setEvents] = useState<Event[]>(sampleEvents);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [reels, setReels] = useState<Reel[]>([]);
+  const [org, setOrg] = useState<OrgMap>({});
+  const [donation, setDonation] = useState<DonationData | null>(null);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.from('events').select('*').eq('is_published', true).order('start_date', { ascending: true }).then(({ data }) => {
+      if (data && data.length > 0) {
+        setEvents(data.map((e: Record<string, unknown>) => ({
+          id: e.id as string, slug: e.slug as string, title: e.title as string,
+          description: (e.short_description as string) || (e.full_description as string) || '',
+          category: e.category as string, event_date: e.start_date as string,
+          location: e.location as string, image_url: (e.image_url as string) || images.festival,
+          highlights: e.highlights as string[] | undefined,
+        })));
+      }
+    });
+    supabase.from('team_members').select('id, display_name, position, occupation, profile_image_url').eq('is_published', true).order('display_order').then(({ data }) => {
+      if (data && data.length > 0) setTeam(data as TeamMember[]);
+    });
+    supabase.from('testimonials').select('id, name, designation, organization, message, photo_url').eq('status', true).order('display_order').then(({ data }) => {
+      if (data && data.length > 0) setTestimonials(data as Testimonial[]);
+    });
+    supabase.from('instagram_reels').select('id, reel_url, title, thumbnail_url').eq('is_active', true).order('display_order').then(({ data }) => {
+      if (data && data.length > 0) setReels(data as Reel[]);
+    });
+    supabase.from('organization_settings').select('key, value').eq('is_public', true).then(({ data }) => {
+      if (data) { const map: OrgMap = {}; (data as { key: string; value: string }[]).forEach((r) => { map[r.key] = r.value; }); setOrg(map); }
+    });
+    supabase.from('donation_settings').select('*').limit(1).single().then(({ data }) => {
+      if (data) setDonation(data as DonationData);
+    });
+  }, []);
+
+  return { events, team, testimonials, reels, org, donation };
+}
+
+function App() {
+  const { events, team, testimonials, reels, org, donation } = useSiteData();
+  const path = window.location.pathname;
+  if (path.startsWith('/admin')) return <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading…</div>}><AdminApp /></Suspense>;
+  if (path === '/about') return <About org={org} />;
+  if (path === '/events') return <EventsPage events={events} />;
+  if (path === '/team') return <Team team={team} org={org} />;
+  if (path === '/testimonials') return <Testimonials testimonials={testimonials} org={org} />;
+  if (path === '/donate') return <Donate donation={donation} org={org} />;
+  if (path === '/contact') { window.location.replace('/#contact'); return null; }
+  if (path.startsWith('/events/')) return <EventDetail event={events.find((item) => item.slug === path.split('/')[2]) ?? events[0]} />;
+  return <Home events={events} team={team} testimonials={testimonials} reels={reels} org={org} />;
+}
 export default App;
