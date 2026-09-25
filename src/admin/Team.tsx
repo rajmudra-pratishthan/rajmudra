@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X, Search, Lock } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Plus, Pencil, Trash2, X, Search, Lock, GripVertical } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import AdminLayout from './AdminLayout';
-import { useToast, useConfirm, logActivity, usePagination } from './utils';
+import { useToast, useConfirm, logActivity } from './utils';
 
 type Member = {
   id: string; full_name: string; display_name: string; profile_image_url: string;
@@ -14,21 +14,21 @@ const empty: Omit<Member, 'id'> = { full_name: '', display_name: '', profile_ima
 
 export default function Team() {
   const [items, setItems] = useState<Member[]>([]);
-  const [total, setTotal] = useState(0);
   const [query, setQuery] = useState('');
   const [modal, setModal] = useState<Partial<Member> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const dragIndex = useRef<number | null>(null);
   const { toast } = useToast();
   const { confirm } = useConfirm();
-  const { page, setPage, totalPages, from, to } = usePagination(total, 20);
 
   async function load() {
-    let q = supabase!.from('team_members').select('*', { count: 'exact' }).order('display_order').range(from, to);
+    let q = supabase!.from('team_members').select('*').order('display_order');
     if (query) q = q.ilike('full_name', `%${query}%`);
-    const { data, count } = await q;
-    setItems((data ?? []) as Member[]); setTotal(count ?? 0);
+    const { data } = await q;
+    setItems((data ?? []) as Member[]);
   }
-  useEffect(() => { load(); }, [page, query]);
+  useEffect(() => { load(); }, [query]);
 
   async function save() {
     if (!modal) return;
@@ -36,7 +36,7 @@ export default function Team() {
     const { id, ...rest } = modal as Member;
     const { error } = id
       ? await supabase!.from('team_members').update({ ...rest, updated_at: new Date().toISOString() }).eq('id', id)
-      : await supabase!.from('team_members').insert(rest);
+      : await supabase!.from('team_members').insert({ ...rest, display_order: items.length });
     if (error) { toast('error', error.message); } else {
       toast('success', id ? 'Member updated.' : 'Member added.');
       await logActivity(id ? 'Updated team member' : 'Added team member', 'team_member', id, { name: rest.full_name });
@@ -55,29 +55,51 @@ export default function Team() {
     await supabase!.from('team_members').update({ [field]: !val }).eq('id', id); load();
   }
 
+  // ── Drag & drop ──────────────────────────────────────────────────────────
+  function onDragStart(i: number) { dragIndex.current = i; }
+  function onDragOver(e: React.DragEvent, i: number) {
+    e.preventDefault();
+    if (dragIndex.current === null || dragIndex.current === i) return;
+    const next = [...items];
+    const [moved] = next.splice(dragIndex.current, 1);
+    next.splice(i, 0, moved);
+    dragIndex.current = i;
+    setItems(next);
+  }
+  async function onDrop() {
+    dragIndex.current = null;
+    setSavingOrder(true);
+    await Promise.all(items.map((m, i) =>
+      supabase!.from('team_members').update({ display_order: i }).eq('id', m.id)
+    ));
+    setSavingOrder(false);
+    toast('success', 'Order saved.');
+  }
+
   return (
     <AdminLayout title="Team Members">
       <div className="page-header">
-        <div><h1>Team Members</h1><p>{total} members</p></div>
+        <div><h1>Team Members</h1><p>{items.length} members · drag rows to reorder</p></div>
         <button className="btn btn-primary" onClick={() => setModal({ ...empty })}><Plus size={15} />Add Member</button>
       </div>
 
       <div className="toolbar">
-        <div className="search-input-wrap"><Search size={15} /><input placeholder="Search members…" value={query} onChange={(e) => { setQuery(e.target.value); setPage(1); }} style={{ padding: '8px 8px 8px 34px', border: '1px solid #e2e8f0', borderRadius: 6, width: '100%' }} /></div>
+        <div className="search-input-wrap"><Search size={15} /><input placeholder="Search members…" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
+        {savingOrder && <span style={{ fontSize: 12, color: 'var(--a-muted)' }}>Saving order…</span>}
       </div>
 
       <div className="a-card">
         {items.length === 0 ? <div className="empty-state"><X size={32} /><p>No members found.</p></div> : (
           <div className="a-table-wrap">
             <table className="a-table">
-              <thead><tr><th>Photo</th><th>Name</th><th>Position</th><th>Year</th><th>Published</th><th>Featured</th><th>Actions</th></tr></thead>
+              <thead><tr><th style={{ width: 32 }} /><th>Photo</th><th>Name</th><th>Position</th><th>Published</th><th>Featured</th><th>Actions</th></tr></thead>
               <tbody>
-                {items.map((m) => (
-                  <tr key={m.id}>
+                {items.map((m, i) => (
+                  <tr key={m.id} draggable onDragStart={() => onDragStart(i)} onDragOver={(e) => onDragOver(e, i)} onDrop={onDrop} style={{ cursor: 'grab' }}>
+                    <td style={{ color: 'var(--a-muted)', paddingRight: 0 }}><GripVertical size={16} /></td>
                     <td>{m.profile_image_url && <img src={m.profile_image_url} alt={m.display_name} />}</td>
                     <td><strong>{m.display_name}</strong><br /><span style={{ fontSize: 11, color: '#6f675f' }}>{m.occupation}</span></td>
                     <td>{m.position}</td>
-                    <td>{m.joining_year}</td>
                     <td><label className="toggle"><input type="checkbox" checked={m.is_published} onChange={() => toggle(m.id, 'is_published', m.is_published)} /><span className="toggle-slider" /></label></td>
                     <td><label className="toggle"><input type="checkbox" checked={m.is_featured} onChange={() => toggle(m.id, 'is_featured', m.is_featured)} /><span className="toggle-slider" /></label></td>
                     <td><div style={{ display: 'flex', gap: 6 }}>
@@ -88,13 +110,6 @@ export default function Team() {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
-        {totalPages > 1 && (
-          <div className="pagination">
-            <button disabled={page === 1} onClick={() => setPage(page - 1)}>‹</button>
-            {Array.from({ length: totalPages }, (_, i) => <button key={i} className={page === i + 1 ? 'active' : ''} onClick={() => setPage(i + 1)}>{i + 1}</button>)}
-            <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>›</button>
           </div>
         )}
       </div>
@@ -127,7 +142,7 @@ export default function Team() {
                       <option value="true">Yes</option><option value="false">No</option>
                     </select>
                   </div>
-                  <div className="a-field"><label>Featured (Homepage)</label>
+                  <div className="a-field"><label>Featured on Homepage</label>
                     <select value={modal.is_featured ? 'true' : 'false'} onChange={(e) => setModal({ ...modal, is_featured: e.target.value === 'true' })}>
                       <option value="false">No</option><option value="true">Yes</option>
                     </select>

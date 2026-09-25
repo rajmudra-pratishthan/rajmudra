@@ -156,9 +156,34 @@ function EventCard({ event }: { event: Event }) { return <article className="eve
 function EventsSection({ events }: { events: Event[] }) { return <section className="section events-section"><div className="container"><div className="section-heading"><div><SectionLabel>Moments that bring us together</SectionLabel><h2>Upcoming events</h2></div><Button href="/events" secondary>View all events</Button></div><div className="events-grid">{events.slice(0, 3).map((event) => <EventCard event={event} key={event.slug} />)}</div></div></section>; }
 
 function TimelineSection() { const items = [['26 January', 'Republic Day', 'Flag hoisting, food support and gratitude for community contributors'], ['14 April', 'Dr. B. R. Ambedkar Jayanti', 'A message of equality and meaningful social initiatives'], ['15 August', 'Independence Day', 'School kits, books and educational support for students'], ['March–April', 'Shivaji Maharaj Birth Celebration', 'Competitions, art, sport and a community-wide celebration'], ['Dussehra · Diwali', 'Community gratitude', 'Mahaprasad, appreciation, gifts and time together']]; return <section className="section timeline-section"><div className="container timeline-grid"><div><SectionLabel>Across the year</SectionLabel><h2>Rooted in tradition,<br /><em>moving forward.</em></h2><p>Every festival, initiative and gathering is a chance to deepen our connection with the community.</p></div><div className="timeline">{items.map(([date, title, text], index) => <div className="timeline-item" key={title}><div className="timeline-marker">{String(index + 1).padStart(2, '0')}</div><div><span>{date}</span><h3>{title}</h3><p>{text}</p></div></div>)}</div></div></section>; }
-function InstagramSection({ reels }: { reels: Reel[] }) {
+function ReelCard({ reel, index }: { reel: Reel; index: number }) {
+  return (
+    <a className="reel-card" href={reel.reel_url} target="_blank" rel="noreferrer">
+      <img src={reel.thumbnail_url || images.culture} alt="Rajmudra Pratishthan Instagram moment" loading="lazy" />
+      <span><Instagram size={18} /> 0{index + 1}</span>
+    </a>
+  );
+}
+function InstagramSection({ reels, org }: { reels: Reel[]; org: OrgMap }) {
   const display = reels.length > 0 ? reels : fallbackReels;
-  return <section className="section instagram-section"><div className="container"><div className="section-heading"><div><SectionLabel>Digital memories</SectionLabel><h2>Moments from Instagram</h2></div><a className="instagram-link" href="https://instagram.com" target="_blank" rel="noreferrer"><Instagram size={17} /> @rajmudrapratishthan <CircleArrowOutUpRight size={15} /></a></div><div className="reel-row">{display.map((reel, index) => <a className="reel-card" href={reel.reel_url} target="_blank" rel="noreferrer" key={reel.id}><img src={reel.thumbnail_url || images.culture} alt="Rajmudra Pratishthan Instagram moment" loading="lazy" /><span><Instagram size={18} /> 0{index + 1}</span></a>)}</div></div></section>;
+  const track = [...display, ...display];
+  const igUrl = org.instagram || 'https://instagram.com';
+  const igHandle = igUrl.replace(/\/+$/, '').split('/').pop() || 'Instagram';
+  return (
+    <section className="section instagram-section">
+      <div className="container">
+        <div className="section-heading">
+          <div><SectionLabel>Digital memories</SectionLabel><h2>Moments from Instagram</h2></div>
+          <a className="instagram-link" href={igUrl} target="_blank" rel="noreferrer"><Instagram size={17} /> @{igHandle} <CircleArrowOutUpRight size={15} /></a>
+        </div>
+      </div>
+      <div className="reel-marquee-wrap">
+        <div className="reel-marquee">
+          {track.map((reel, i) => <ReelCard key={i} reel={reel} index={i % display.length} />)}
+        </div>
+      </div>
+    </section>
+  );
 }
 function Footer({ org }: { org: OrgMap }) {
   const address = org.address || 'Maharashtra, India';
@@ -213,7 +238,7 @@ function HomeContact({ org }: { org: OrgMap }) {
   async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setError(''); const form = new FormData(event.currentTarget); if (supabase) { const { error: submitError } = await supabase.from('contact_messages').insert({ name: String(form.get('name')), phone: String(form.get('phone')), email: String(form.get('email')), message: String(form.get('message')) }); if (submitError) { setError('There was a problem sending your message. Please try again.'); return; } } setSent(true); }
   return <section className="section home-contact-section" id="contact"><div className="container home-contact-grid"><div className="contact-info"><SectionLabel>Get in touch</SectionLabel><h2>Let's make something <em>meaningful.</em></h2><p>Your time, skills and support can all make a lasting difference.</p><div className="contact-lines"><span><strong>Location</strong>{address}</span><span><strong>Email</strong>{email}</span><span><strong>Phone / WhatsApp</strong>{phone}</span></div></div><div className="contact-form-wrap">{sent ? <div className="success-state"><div><Send size={22} /></div><h3>Message received.</h3><p>Thank you for reaching out. Our team will get back to you soon.</p><a href="/">Back to home <ArrowRight size={15} /></a></div> : <form onSubmit={submit}><h3>Send a message</h3><label>Your name<input name="name" required placeholder="Full name" /></label><div className="form-row"><label>Phone<input name="phone" required placeholder="Phone number" /></label><label>Email<input name="email" required type="email" placeholder="Email address" /></label></div><label>Your message<textarea name="message" required rows={5} placeholder="How can we help?" /></label>{error && <p className="form-error">{error}</p>}<button className="button" type="submit">Send message <Send size={16} /></button></form>}</div></div></section>;
 }
-function Home({ events, team, testimonials, reels, org }: { events: Event[]; team: TeamMember[]; testimonials: Testimonial[]; reels: Reel[]; org: OrgMap }) { return <><Header /><main><Hero /><EventsSection events={events} /><Stats org={org} /><WorkSection /><TeamSlider team={team} /><TestimonialSlider testimonials={testimonials} /><InstagramSection reels={reels} /><HomeContact org={org} /><section className="cta-strip"><div className="container"><div><SectionLabel>Your support matters</SectionLabel><h2>Make a difference in the community.</h2></div><Button href="/donate">Donate now</Button></div></section></main><Footer org={org} /></>; }
+function Home({ events, team, testimonials, reels, org }: { events: Event[]; team: TeamMember[]; testimonials: Testimonial[]; reels: Reel[]; org: OrgMap }) { return <><Header /><main><Hero /><EventsSection events={events} /><Stats org={org} /><WorkSection /><TeamSlider team={team} /><TestimonialSlider testimonials={testimonials} /><InstagramSection reels={reels} org={org} /><HomeContact org={org} /><section className="cta-strip"><div className="container"><div><SectionLabel>Your support matters</SectionLabel><h2>Make a difference in the community.</h2></div><Button href="/donate">Donate now</Button></div></section></main><Footer org={org} /></>; }
 function About({ org }: { org: OrgMap }) {
   const foundationYear = org.foundation_year || '2015';
   const memberCount = org.member_count || '50+';
@@ -252,7 +277,7 @@ function useSiteData() {
         })));
       }
     });
-    supabase.from('team_members').select('id, display_name, position, occupation, profile_image_url').eq('is_published', true).order('display_order').then(({ data }) => {
+    supabase.from('team_members').select('id, display_name, position, occupation, profile_image_url').eq('is_published', true).eq('is_featured', true).order('display_order').then(({ data }) => {
       if (data && data.length > 0) setTeam(data as TeamMember[]);
     });
     supabase.from('testimonials').select('id, name, designation, organization, message, photo_url').eq('status', true).order('display_order').then(({ data }) => {

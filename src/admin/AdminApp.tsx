@@ -1,5 +1,5 @@
 import './admin.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { AuthProvider, ToastProvider, ConfirmProvider, useAuth } from './utils';
 import AdminLogin from './AdminLogin';
 import Dashboard from './Dashboard';
@@ -16,36 +16,184 @@ import ContactMessages from './ContactMessages';
 import DonationSettings from './DonationSettings';
 import OrgSettings from './OrgSettings';
 import SiteSettings from './SiteSettings';
+import {
+  Bell, Building2, CalendarDays, ChevronLeft, ChevronRight,
+  Heart, Image, Instagram, LayoutDashboard, LogOut,
+  Mail, MessageSquare, Settings, Star, Users, Menu, X,
+} from 'lucide-react';
 
-function AdminRouter() {
-  const { session, loading } = useAuth();
-  const [path, setPath] = useState(window.location.pathname);
+const NAV = [
+  { section: 'Overview', items: [{ label: 'Dashboard', icon: LayoutDashboard, path: '/admin' }] },
+  { section: 'Content', items: [
+    { label: 'Banners', icon: Image, path: '/admin/banners' },
+    { label: 'Announcements', icon: Bell, path: '/admin/announcements' },
+    { label: 'Events', icon: CalendarDays, path: '/admin/events' },
+  ]},
+  { section: 'Community', items: [
+    { label: 'Team Members', icon: Users, path: '/admin/team' },
+    { label: 'Testimonials', icon: Star, path: '/admin/testimonials' },
+    { label: 'Instagram Reels', icon: Instagram, path: '/admin/instagram-reels' },
+  ]},
+  { section: 'Engagement', items: [
+    { label: 'Comments', icon: MessageSquare, path: '/admin/comments' },
+    { label: 'Contact Messages', icon: Mail, path: '/admin/contact-messages' },
+  ]},
+  { section: 'Settings', items: [
+    { label: 'Donation', icon: Heart, path: '/admin/donation-settings' },
+    { label: 'Organization', icon: Building2, path: '/admin/organization-settings' },
+    { label: 'Site Settings', icon: Settings, path: '/admin/site-settings' },
+  ]},
+];
+
+function matchPath(path: string) {
+  if (path === '/admin' || path === '/admin/') return '/admin';
+  if (/^\/admin\/events\/[^/]+\/gallery$/.test(path)) return '/admin/events/gallery';
+  if (/^\/admin\/events\/[^/]+\/documents$/.test(path)) return '/admin/events/documents';
+  return path;
+}
+
+function PagePanel({ active, path, children }: { active: string; path: string; children: ReactNode }) {
+  return (
+    <div className={`admin-panel ${active === path ? 'admin-panel-active' : ''}`}>
+      {children}
+    </div>
+  );
+}
+
+function AdminShell() {
+  const { signOut, session } = useAuth();
+  const [path, setPath] = useState(matchPath(window.location.pathname));
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const handler = () => setPath(window.location.pathname);
+    const handler = () => { setPath(matchPath(window.location.pathname)); setMobileOpen(false); };
     window.addEventListener('popstate', handler);
     return () => window.removeEventListener('popstate', handler);
   }, []);
 
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', color: '#6f675f' }}>Loading…</div>;
+  function navigate(to: string) {
+    window.history.pushState({}, '', to);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }
+
+  const activeLabel = NAV.flatMap(g => g.items).find(i => i.path === path)?.label ?? 'Admin';
+  const initials = session?.user.email?.slice(0, 2).toUpperCase() ?? 'A';
+
+  const sidebarContent = (isMobile = false) => (
+    <>
+      <div className="sb-brand">
+        <img src="/logo.png" alt="" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+        {(!collapsed || isMobile) && (
+          <div className="sb-brand-text">
+            <strong>Rajmudra</strong>
+            <span>Admin Panel</span>
+          </div>
+        )}
+        {isMobile
+          ? <button className="sb-icon-btn" onClick={() => setMobileOpen(false)}><X size={18} /></button>
+          : <button className="sb-icon-btn sb-collapse-btn" onClick={() => setCollapsed(c => !c)}>
+              {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+            </button>
+        }
+      </div>
+
+      <nav className="sb-nav">
+        {NAV.map(({ section, items }) => (
+          <div key={section} className="sb-group">
+            {(!collapsed || isMobile) && <div className="sb-section">{section}</div>}
+            {items.map(({ label, icon: Icon, path: p }) => (
+              <button
+                key={p}
+                className={`sb-link ${path === p ? 'active' : ''}`}
+                onClick={() => navigate(p)}
+                title={collapsed && !isMobile ? label : undefined}
+              >
+                <span className="sb-link-icon"><Icon size={17} /></span>
+                {(!collapsed || isMobile) && <span className="sb-link-label">{label}</span>}
+                {path === p && <span className="sb-active-dot" />}
+              </button>
+            ))}
+          </div>
+        ))}
+      </nav>
+
+      <div className="sb-footer">
+        {(!collapsed || isMobile) && (
+          <div className="sb-user">
+            <div className="sb-avatar">{initials}</div>
+            <div className="sb-user-info">
+              <span className="sb-user-email">{session?.user.email}</span>
+              <span className="sb-user-role">Administrator</span>
+            </div>
+          </div>
+        )}
+        <button className="sb-logout" onClick={signOut} title="Logout">
+          <LogOut size={15} />
+          {(!collapsed || isMobile) && <span>Logout</span>}
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <div className={`admin-shell ${collapsed ? 'sb-collapsed' : ''}`}>
+      {/* Desktop sidebar */}
+      <aside className="admin-sb sb-desktop">{sidebarContent(false)}</aside>
+
+      {/* Mobile drawer */}
+      {mobileOpen && <div className="sb-backdrop" onClick={() => setMobileOpen(false)} />}
+      <aside className={`admin-sb sb-mobile ${mobileOpen ? 'open' : ''}`}>{sidebarContent(true)}</aside>
+
+      {/* Main */}
+      <div className="admin-body">
+        <header className="admin-header">
+          <div className="admin-header-left">
+            <button className="sb-icon-btn mobile-menu-btn" onClick={() => setMobileOpen(true)}>
+              <Menu size={20} />
+            </button>
+            <div className="admin-breadcrumb">
+              <span className="admin-breadcrumb-root">Admin</span>
+              <ChevronRight size={13} />
+              <span className="admin-breadcrumb-current">{activeLabel}</span>
+            </div>
+          </div>
+          <div className="admin-header-right">
+            <a href="/" target="_blank" rel="noreferrer" className="header-view-site">View site ↗</a>
+            <div className="header-avatar">{initials}</div>
+          </div>
+        </header>
+
+        <main className="admin-panels">
+          <PagePanel active={path} path="/admin"><Dashboard /></PagePanel>
+          <PagePanel active={path} path="/admin/banners"><Banners /></PagePanel>
+          <PagePanel active={path} path="/admin/announcements"><Announcements /></PagePanel>
+          <PagePanel active={path} path="/admin/events"><Events /></PagePanel>
+          <PagePanel active={path} path="/admin/events/gallery"><EventGallery /></PagePanel>
+          <PagePanel active={path} path="/admin/events/documents"><EventDocuments /></PagePanel>
+          <PagePanel active={path} path="/admin/team"><Team /></PagePanel>
+          <PagePanel active={path} path="/admin/testimonials"><Testimonials /></PagePanel>
+          <PagePanel active={path} path="/admin/instagram-reels"><InstagramReels /></PagePanel>
+          <PagePanel active={path} path="/admin/comments"><Comments /></PagePanel>
+          <PagePanel active={path} path="/admin/contact-messages"><ContactMessages /></PagePanel>
+          <PagePanel active={path} path="/admin/donation-settings"><DonationSettings /></PagePanel>
+          <PagePanel active={path} path="/admin/organization-settings"><OrgSettings /></PagePanel>
+          <PagePanel active={path} path="/admin/site-settings"><SiteSettings /></PagePanel>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function AdminRouter() {
+  const { session, loading } = useAuth();
+  if (loading) return (
+    <div className="admin-loading">
+      <div className="admin-loading-spinner" />
+    </div>
+  );
   if (!session) return <AdminLogin />;
-
-  if (path === '/admin' || path === '/admin/') return <Dashboard />;
-  if (path === '/admin/banners') return <Banners />;
-  if (path === '/admin/announcements') return <Announcements />;
-  if (path === '/admin/events') return <Events />;
-  if (/^\/admin\/events\/[^/]+\/gallery$/.test(path)) return <EventGallery />;
-  if (/^\/admin\/events\/[^/]+\/documents$/.test(path)) return <EventDocuments />;
-  if (path === '/admin/team') return <Team />;
-  if (path === '/admin/testimonials') return <Testimonials />;
-  if (path === '/admin/instagram-reels') return <InstagramReels />;
-  if (path === '/admin/comments') return <Comments />;
-  if (path === '/admin/contact-messages') return <ContactMessages />;
-  if (path === '/admin/donation-settings') return <DonationSettings />;
-  if (path === '/admin/organization-settings') return <OrgSettings />;
-  if (path === '/admin/site-settings') return <SiteSettings />;
-
-  return <Dashboard />;
+  return <AdminShell />;
 }
 
 export default function AdminApp() {
