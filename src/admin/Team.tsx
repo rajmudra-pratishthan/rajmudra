@@ -14,6 +14,7 @@ const empty: Omit<Member, 'id'> = { full_name: '', display_name: '', profile_ima
 
 export default function Team() {
   const [items, setItems] = useState<Member[]>([]);
+  const [savedOrder, setSavedOrder] = useState<string[]>([]); // ids in last-saved order
   const [query, setQuery] = useState('');
   const [modal, setModal] = useState<Partial<Member> | null>(null);
   const [saving, setSaving] = useState(false);
@@ -22,11 +23,15 @@ export default function Team() {
   const { toast } = useToast();
   const { confirm } = useConfirm();
 
+  const isDirty = items.length > 0 && items.map(m => m.id).join() !== savedOrder.join();
+
   async function load() {
     let q = supabase!.from('team_members').select('*').order('display_order');
     if (query) q = q.ilike('full_name', `%${query}%`);
     const { data } = await q;
-    setItems((data ?? []) as Member[]);
+    const members = (data ?? []) as Member[];
+    setItems(members);
+    setSavedOrder(members.map(m => m.id));
   }
   useEffect(() => { load(); }, [query]);
 
@@ -66,26 +71,43 @@ export default function Team() {
     dragIndex.current = i;
     setItems(next);
   }
-  async function onDrop() {
-    dragIndex.current = null;
+  function onDrop() { dragIndex.current = null; } // no API call here
+
+  // only rows where display_order number changed — not position in savedOrder array
+  async function saveOrder() {
     setSavingOrder(true);
-    await Promise.all(items.map((m, i) =>
-      supabase!.from('team_members').update({ display_order: i }).eq('id', m.id)
-    ));
+    const changed = items
+      .map((m, i) => ({ id: m.id, display_order: i, original: m.display_order }))
+      .filter(row => row.display_order !== row.original);
+    const results = await Promise.all(
+      changed.map(row => supabase!.from('team_members').update({ display_order: row.display_order }).eq('id', row.id))
+    );
+    const failed = results.find(r => r.error);
+    if (failed?.error) { toast('error', failed.error.message); } else {
+      setItems(prev => prev.map((m, i) => ({ ...m, display_order: i })));
+      setSavedOrder(items.map(m => m.id));
+      toast('success', `Order saved. (${changed.length} row${changed.length !== 1 ? 's' : ''} updated)`);
+    }
     setSavingOrder(false);
-    toast('success', 'Order saved.');
   }
 
   return (
     <AdminLayout title="Team Members">
       <div className="page-header">
         <div><h1>Team Members</h1><p>{items.length} members · drag rows to reorder</p></div>
-        <button className="btn btn-primary" onClick={() => setModal({ ...empty })}><Plus size={15} />Add Member</button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {isDirty && (
+            <button className="btn btn-ghost" onClick={saveOrder} disabled={savingOrder}>
+              {savingOrder ? 'Saving…' : '💾 Save Order'}
+            </button>
+          )}
+          <button className="btn btn-primary" onClick={() => setModal({ ...empty })}><Plus size={15} />Add Member</button>
+        </div>
       </div>
 
       <div className="toolbar">
         <div className="search-input-wrap"><Search size={15} /><input placeholder="Search members…" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
-        {savingOrder && <span style={{ fontSize: 12, color: 'var(--a-muted)' }}>Saving order…</span>}
+        {isDirty && <span style={{ fontSize: 12, color: 'var(--a-warning)', fontWeight: 500 }}>⚠ Unsaved order changes</span>}
       </div>
 
       <div className="a-card">
