@@ -257,9 +257,9 @@ body { font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
 /* ── CARD ────────────────────────────────────────────────────────────────── */
 .a-card {
   background: var(--a-surface); border: 1px solid var(--a-border);
-  border-radius: var(--a-radius); box-shadow: var(--a-shadow); overflow: hidden;
+  border-radius: var(--a-radius); box-shadow: var(--a-shadow); overflow: hidden; padding: 22px;
 }
-.a-card-pad { padding: 22px; }
+.a-card-no-pad { padding: 0; }
 
 /* ── SECTION TITLE ───────────────────────────────────────────────────────── */
 .section-title {
@@ -282,7 +282,8 @@ body { font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
 .search-input-wrap input:focus { border-color: var(--a-primary); box-shadow: 0 0 0 3px var(--a-primary-glow); }
 
 /* ── TABLE ───────────────────────────────────────────────────────────────── */
-.a-table-wrap { overflow-x: auto; }
+.a-table-wrap { overflow-x: auto; margin: -22px; }
+.a-table-wrap + * { margin-top: 22px; }
 .a-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .a-table thead tr { background: var(--a-bg); }
 .a-table th {
