@@ -13,7 +13,6 @@ import Testimonials from './Testimonials';
 import InstagramReels from './InstagramReels';
 import ContactMessages from './ContactMessages';
 import DonationSettings from './DonationSettings';
-import OrgSettings from './OrgSettings';
 import SiteSettings from './SiteSettings';
 import {
   Bell, CalendarDays, ChevronLeft, ChevronRight,
