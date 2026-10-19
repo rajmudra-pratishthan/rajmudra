@@ -7,7 +7,7 @@ import { AboutPage } from './components/AboutPage';
 import { EventsPage, EventDetail } from './components/EventsSection';
 import { TeamPage } from './components/TeamSection';
 import { TestimonialsPage } from './components/TestimonialsPage';
-import { DonatePage } from './components/DonatePage';
+import { DonateModal } from './components/DonateModal';
 import { images, sampleEvents } from './components/constants';
 import type { Event, TeamMember, Testimonial, Reel, DonationData, OrgMap, SiteSettings } from './components/types';
 
@@ -25,7 +25,6 @@ function useSiteData(path: string) {
   const isHome = path === '/' || path === '';
   const isEvents = path === '/events' || path.startsWith('/events/');
   const isTeam = path === '/team';
-  const isDonate = path === '/donate';
 
   useEffect(() => {
     if (!supabase) return;
@@ -34,6 +33,10 @@ function useSiteData(path: string) {
     });
     supabase.from('site_settings').select('key, value').then(({ data }) => {
       if (data) { const map: SiteSettings = {}; (data as { key: string; value: string }[]).forEach((r) => { map[r.key] = r.value; }); setSite(map); }
+    });
+    // fetch donation always so modal is ready
+    supabase.from('donation_settings').select('*').limit(1).single().then(({ data }) => {
+      if (data) setDonation(data as DonationData);
     });
     if (isHome || isEvents) {
       supabase.from('events').select('*').eq('is_published', true).order('start_date', { ascending: true }).then(({ data }) => {
@@ -65,11 +68,6 @@ function useSiteData(path: string) {
         if (data && data.length > 0) setReels(data as Reel[]);
       });
     }
-    if (isDonate) {
-      supabase.from('donation_settings').select('*').limit(1).single().then(({ data }) => {
-        if (data) setDonation(data as DonationData);
-      });
-    }
   }, [path]);
 
   return { events, featuredEvents, team, allTeam, testimonials, reels, org, site, donation };
@@ -77,15 +75,38 @@ function useSiteData(path: string) {
 
 function App() {
   const [path, setPath] = useState(window.location.pathname);
+  const [donateOpen, setDonateOpen] = useState(false);
   const { events, featuredEvents, team, allTeam, testimonials, reels, org, site, donation } = useSiteData(path);
 
   useEffect(() => {
-    const handler = () => setPath(window.location.pathname);
+    const handler = () => {
+      const p = window.location.pathname;
+      if (p === '/donate') {
+        setDonateOpen(true);
+        window.history.replaceState({}, '', '/');
+      } else {
+        setPath(p);
+      }
+    };
     window.addEventListener('popstate', handler);
     return () => window.removeEventListener('popstate', handler);
   }, []);
 
+  // intercept all donate link clicks globally
   useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement).closest('a');
+      if (a && (a.getAttribute('href') === '/donate' || a.pathname === '/donate')) {
+        e.preventDefault();
+        setDonateOpen(true);
+      }
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, []);
+
+  useEffect(() => {
+    if (path === '/donate') { setDonateOpen(true); setPath('/'); return; }
     const hash = window.location.hash;
     if (hash) {
       const tryScroll = (attempts = 0) => {
@@ -100,14 +121,19 @@ function App() {
   }, [path]);
 
   if (path.startsWith('/admin')) return <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading…</div>}><AdminApp /></Suspense>;
-  if (path === '/about') return <AboutPage org={org} />;
-  if (path === '/events') return <EventsPage events={events} org={org} />;
-  if (path === '/team') return <TeamPage team={allTeam} org={org} />;
-  if (path === '/testimonials') return <TestimonialsPage testimonials={testimonials} org={org} />;
-  if (path === '/donate') return <DonatePage donation={donation} org={org} />;
-  if (path === '/contact') { window.location.replace('/#contact'); return null; }
-  if (path.startsWith('/events/')) return <EventDetail event={events.find((item) => item.slug === path.split('/')[2]) ?? events[0]} org={org} />;
-  return <HomePage featuredEvents={featuredEvents} team={team} testimonials={testimonials} reels={reels} org={org} site={site} />;
+
+  return (
+    <>
+      {donateOpen && <DonateModal donation={donation} onClose={() => setDonateOpen(false)} />}
+      {path === '/about' && <AboutPage org={org} />}
+      {path === '/events' && <EventsPage events={events} org={org} />}
+      {path === '/team' && <TeamPage team={allTeam} org={org} />}
+      {path === '/testimonials' && <TestimonialsPage testimonials={testimonials} org={org} />}
+      {path === '/contact' && (() => { window.location.replace('/#contact'); return null; })()}
+      {path.startsWith('/events/') && <EventDetail event={events.find((item) => item.slug === path.split('/')[2]) ?? events[0]} org={org} />}
+      {(path === '/' || path === '') && <HomePage featuredEvents={featuredEvents} team={team} testimonials={testimonials} reels={reels} org={org} site={site} />}
+    </>
+  );
 }
 
 export default App;
